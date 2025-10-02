@@ -115,7 +115,8 @@
         <div class="max-w-7xl mx-auto">
 
             <!-- Encabezado con el nombre de la empresa y logo -->
-            <header class="text-center mb-10">
+            <header class="text-center mb-10 relative">
+                <button id="logout-button" class="btn btn-danger absolute top-0 right-0 mt-0 mr-0 sm:mt-4 sm:mr-4 text-white font-bold py-2 px-4 rounded-md text-sm">Cerrar Sesión</button>
                 <img src="https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/public/video/imagen_2025-10-02_114428033.png" alt="Logo Lion Tech Solutions" class="mx-auto mb-4 w-24 h-24 rounded-full">
                 <h1 class="text-4xl sm:text-5xl font-bold text-white">Lion Tech Solutions</h1>
                 <p class="text-lg text-gray-400 mt-2">Panel de Gestión de Clientes</p>
@@ -302,250 +303,305 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- LOGIN ELEMENTS ---
+            
+            function initializeApp() {
+                // --- APP ELEMENTS ---
+                const services = [
+                    { name: 'Canva Pro', category: 'Diseño', network: 'Canva' },
+                    { name: 'Gemini Pro', category: 'IA', network: 'Google' },
+                    { name: 'YouTube Premium', category: 'Video', network: 'Google' },
+                    { name: 'Adobe Creative Cloud', category: 'Productividad', network: 'Adobe' },
+                    { name: 'Netflix', category: 'Video', network: 'Netflix' },
+                    { name: 'Spotify Premium', category: 'Música', network: 'Spotify' },
+                    { name: 'Disney+', category: 'Video', network: 'Disney' },
+                    { name: 'HBO Max', category: 'Video', network: 'Warner Bros. Discovery' },
+                    { name: 'Microsoft 365', category: 'Productividad', network: 'Microsoft' },
+                    { name: 'Amazon Prime Video', category: 'Video', network: 'Amazon' },
+                    { name: 'Seguidores Instagram', category: 'Redes Sociales', network: 'Instagram' },
+                    { name: 'Seguidores TikTok', category: 'Redes Sociales', network: 'TikTok' },
+                    { name: 'Likes Instagram', category: 'Redes Sociales', network: 'Instagram' },
+                    { name: 'Likes TikTok', category: 'Redes Sociales', network: 'TikTok' },
+                    { name: 'Otro', category: 'Personalizado', network: 'N/A' }
+                ];
+                const addForm = document.getElementById('add-client-form');
+                const clientsTableBody = document.getElementById('clients-table-body');
+                const noClientsMessage = document.getElementById('no-clients-message');
+                const servicePurchasedSelect = document.getElementById('service-purchased');
+                const otherServiceWrapper = document.getElementById('other-service-wrapper');
+                const otherServiceName = document.getElementById('other-service-name');
+                const editModal = document.getElementById('edit-modal');
+                const editForm = document.getElementById('edit-client-form');
+                const editServiceSelect = document.getElementById('edit-service-purchased');
+                const editOtherServiceWrapper = document.getElementById('edit-other-service-wrapper');
+                const editOtherServiceName = document.getElementById('edit-other-service-name');
+                const logoutButton = document.getElementById('logout-button');
+                let editingClientIndex = null;
+                let clients = JSON.parse(localStorage.getItem('clients')) || [];
+                let inactivityTimer;
+
+                // --- FUNCTIONS ---
+                const logout = () => {
+                    sessionStorage.removeItem('isLoggedIn');
+                    location.reload();
+                };
+
+                const resetInactivityTimer = () => {
+                    clearTimeout(inactivityTimer);
+                    inactivityTimer = setTimeout(logout, 5 * 60 * 1000); // 5 minutes in milliseconds
+                };
+
+                const saveAndRerender = () => {
+                    localStorage.setItem('clients', JSON.stringify(clients));
+                    renderClients();
+                };
+
+                const renderServices = () => {
+                    const selects = [servicePurchasedSelect, editServiceSelect];
+                    selects.forEach(select => {
+                        select.innerHTML = `<option value="" disabled ${select.id === 'service-purchased' ? 'selected' : ''}>Selecciona un servicio</option>`;
+                    });
+                    
+                    services.forEach(service => {
+                        selects.forEach(select => {
+                            const option = document.createElement('option');
+                            option.value = service.name;
+                            option.textContent = service.name;
+                            select.appendChild(option.cloneNode(true));
+                        });
+                    });
+                };
+                
+                const renderClients = () => {
+                    clientsTableBody.innerHTML = '';
+                    noClientsMessage.style.display = clients.length === 0 ? 'block' : 'none';
+
+                    clients.forEach((client, index) => {
+                        const purchaseDate = new Date(client.purchaseDate + 'T00:00:00');
+                        let warrantyCellHTML = '<p class="text-gray-500">Sin Garantía</p>';
+                        if (client.warrantyDays && client.warrantyDays > 0) {
+                            const warrantyEndDate = new Date(purchaseDate);
+                            warrantyEndDate.setDate(warrantyEndDate.getDate() + client.warrantyDays);
+                            const today = new Date();
+                            today.setHours(0,0,0,0);
+                            const isWarrantyExpired = warrantyEndDate < today;
+                            warrantyCellHTML = `<p class="${isWarrantyExpired ? 'status-expired' : 'status-active'}">Vence: ${warrantyEndDate.toLocaleDateString('es-ES')}</p>`;
+                        }
+
+                        let paymentStatusClass = client.paidAmount >= client.total ? 'status-paid' : (client.paidAmount > 0 ? 'status-partial' : 'status-pending');
+                        let paymentStatusText = client.paidAmount >= client.total ? 'Pagado' : (client.paidAmount > 0 ? 'Abonado' : 'Pendiente');
+                        let receiptLink = client.receipt ? `<a href="${client.receipt}" target="_blank" class="text-blue-400 hover:underline">Ver Foto</a>` : `<span class="text-gray-500">N/A</span>`;
+
+                        const row = document.createElement('tr');
+                        row.className = 'border-b border-gray-700 align-top';
+                        row.innerHTML = `
+                            <td class="px-4 py-3">
+                                <p class="font-medium text-white">${client.name}</p>
+                                <p class="text-xs text-gray-400">${client.service}</p>
+                                 ${client.phone ? `<p class="text-xs text-blue-400 mt-1">${client.phone}</p>` : ''}
+                            </td>
+                            <td class="px-4 py-3 text-xs">
+                                <p>Compra: ${purchaseDate.toLocaleDateString('es-ES')}</p>
+                                ${warrantyCellHTML}
+                            </td>
+                            <td class="px-4 py-3 text-xs">
+                                <p>Total: ${client.total.toFixed(2)}</p>
+                                <p>Pagado: ${client.paidAmount.toFixed(2)}</p>
+                                <p>Resta: ${(client.total - client.paidAmount).toFixed(2)}</p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <p class="font-bold ${paymentStatusClass}">${paymentStatusText}</p>
+                                <p class="text-xs mt-1">${client.delivered ? '✔️ Entregado' : '➖ Pendiente'}</p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary text-white text-xs font-bold py-1 px-2 rounded" onclick="openEditModal(${index})">Editar</button>
+                                    <button class="btn btn-danger text-white text-xs font-bold py-1 px-2 rounded" onclick="deleteClient(${index})">Eliminar</button>
+                                    ${client.phone ? `<button class="btn btn-success text-white text-xs font-bold py-1 px-2 rounded" onclick="sendWhatsApp(${index})">WhatsApp</button>` : ''}
+                                </div>
+                                <div class="mt-2">${receiptLink}</div>
+                            </td>
+                        `;
+                        clientsTableBody.appendChild(row);
+                    });
+                };
+
+                const addClient = (e) => {
+                    e.preventDefault();
+                    const price = parseFloat(addForm['price'].value) || 0;
+                    const discount = parseFloat(addForm['discount'].value) || 0;
+                    let serviceName = addForm['service-purchased'].value;
+                    if (serviceName === 'Otro') {
+                        serviceName = addForm['other-service-name'].value;
+                    }
+
+                    const newClient = {
+                        name: addForm['client-name'].value,
+                        phone: addForm['client-phone'].value,
+                        service: serviceName,
+                        purchaseDate: addForm['purchase-date'].value,
+                        warrantyDays: parseInt(addForm['warranty-days'].value, 10) || 0,
+                        receipt: addForm['receipt-photo-url'].value || null,
+                        price: price,
+                        discount: discount,
+                        total: price - discount,
+                        paidAmount: parseFloat(addForm['paid-amount'].value) || 0,
+                        delivered: addForm['delivered'].checked
+                    };
+                    clients.push(newClient);
+                    saveAndRerender();
+                    addForm.reset();
+                    addForm['warranty-days'].value = 30; 
+                    otherServiceWrapper.classList.add('hidden');
+                    otherServiceName.required = false;
+                };
+                
+                const saveClientChanges = (e) => {
+                    e.preventDefault();
+                    if (editingClientIndex === null) return;
+
+                    const price = parseFloat(editForm['edit-price'].value) || 0;
+                    const discount = parseFloat(editForm['edit-discount'].value) || 0;
+                    let serviceName = editForm['edit-service-purchased'].value;
+                    if (serviceName === 'Otro') {
+                        serviceName = editForm['edit-other-service-name'].value;
+                    }
+
+                    clients[editingClientIndex] = {
+                        name: editForm['edit-client-name'].value,
+                        phone: editForm['edit-client-phone'].value,
+                        service: serviceName,
+                        price: price,
+                        discount: discount,
+                        total: price - discount,
+                        paidAmount: parseFloat(editForm['edit-paid-amount'].value) || 0,
+                        purchaseDate: editForm['edit-purchase-date'].value,
+                        warrantyDays: parseInt(editForm['edit-warranty-days'].value, 10) || 0,
+                        receipt: editForm['edit-receipt-photo-url'].value,
+                        delivered: editForm['edit-delivered'].checked,
+                    };
+
+                    saveAndRerender();
+                    closeEditModal();
+                };
+
+                window.deleteClient = (index) => {
+                    if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+                        clients.splice(index, 1);
+                        saveAndRerender();
+                    }
+                };
+
+                window.openEditModal = (index) => {
+                    editingClientIndex = index;
+                    const client = clients[index];
+                    editForm['edit-client-name'].value = client.name;
+                    editForm['edit-client-phone'].value = client.phone;
+                    
+                    const isStandardService = services.some(s => s.name === client.service);
+                    if (isStandardService) {
+                        editForm['edit-service-purchased'].value = client.service;
+                        editOtherServiceWrapper.classList.add('hidden');
+                        editOtherServiceName.required = false;
+                        editOtherServiceName.value = '';
+                    } else {
+                        editForm['edit-service-purchased'].value = 'Otro';
+                        editOtherServiceWrapper.classList.remove('hidden');
+                        editOtherServiceName.required = true;
+                        editOtherServiceName.value = client.service;
+                    }
+
+                    editForm['edit-price'].value = client.price;
+                    editForm['edit-discount'].value = client.discount;
+                    editForm['edit-paid-amount'].value = client.paidAmount;
+                    editForm['edit-purchase-date'].value = client.purchaseDate;
+                    editForm['edit-warranty-days'].value = client.warrantyDays;
+                    editForm['edit-receipt-photo-url'].value = client.receipt;
+                    editForm['edit-delivered'].checked = client.delivered;
+                    editModal.classList.remove('hidden');
+                };
+
+                window.closeEditModal = () => {
+                    editModal.classList.add('hidden');
+                    editingClientIndex = null;
+                };
+
+                window.sendWhatsApp = (index) => {
+                    const client = clients[index];
+                    if (!client.phone) {
+                        alert('Este cliente no tiene un número de teléfono registrado.');
+                        return;
+                    }
+                    const phoneNumber = client.phone.replace(/\D/g, '');
+                    const fullPhoneNumber = phoneNumber.length > 8 ? phoneNumber : '506' + phoneNumber;
+                    const thankYouImageUrl = 'https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/public/video/tarjeta%20agradecimiento%20negocio%20blanco%20negro%20dorado.png';
+                    let message = `¡Hola ${client.name}! Gracias por tu compra de *${client.service}* en Lion Tech Solutions. Te agradecemos tu preferencia.\n\n${thankYouImageUrl}`;
+
+                    if (client.receipt) {
+                        message += `\n\nAquí puedes ver tu comprobante de pago:\n${client.receipt}`;
+                    }
+
+                    const encodedMessage = encodeURIComponent(message);
+                    const whatsappUrl = `https://wa.me/${fullPhoneNumber}?text=${encodedMessage}`;
+                    window.open(whatsappUrl, '_blank');
+                };
+
+                // --- APP INITIALIZATION ---
+                clients = clients.map(client => {
+                    if (client.warrantyDays === undefined) {
+                        return { ...client, warrantyDays: 30 };
+                    }
+                    return client;
+                });
+                
+                addForm.addEventListener('submit', addClient);
+                editForm.addEventListener('submit', saveClientChanges);
+                logoutButton.addEventListener('click', logout);
+
+                servicePurchasedSelect.addEventListener('change', () => {
+                    if (servicePurchasedSelect.value === 'Otro') {
+                        otherServiceWrapper.classList.remove('hidden');
+                        otherServiceName.required = true;
+                    } else {
+                        otherServiceWrapper.classList.add('hidden');
+                        otherServiceName.required = false;
+                        otherServiceName.value = '';
+                    }
+                });
+                editServiceSelect.addEventListener('change', () => {
+                    if (editServiceSelect.value === 'Otro') {
+                        editOtherServiceWrapper.classList.remove('hidden');
+                        editOtherServiceName.required = true;
+                    } else {
+                        editOtherServiceWrapper.classList.add('hidden');
+                        editOtherServiceName.required = false;
+                        editOtherServiceName.value = '';
+                    }
+                });
+                
+                // Setup inactivity timer listeners
+                ['load', 'mousemove', 'mousedown', 'click', 'scroll', 'keypress'].forEach( evt => 
+                    document.addEventListener(evt, resetInactivityTimer, false) 
+                );
+
+                renderServices();
+                renderClients();
+            }
+
+            // --- LOGIN LOGIC & INITIAL PAGE LOAD ---
             const loginOverlay = document.getElementById('login-overlay');
             const mainContent = document.getElementById('main-content');
             const loginForm = document.getElementById('login-form');
             const passwordInput = document.getElementById('password');
             const errorMessage = document.getElementById('error-message');
-            
-            // --- APP ELEMENTS ---
-            const services = [
-                { name: 'Canva Pro', category: 'Diseño', network: 'Canva' },
-                { name: 'Gemini Pro', category: 'IA', network: 'Google' },
-                { name: 'YouTube Premium', category: 'Video', network: 'Google' },
-                { name: 'Adobe Creative Cloud', category: 'Productividad', network: 'Adobe' },
-                { name: 'Netflix', category: 'Video', network: 'Netflix' },
-                { name: 'Spotify Premium', category: 'Música', network: 'Spotify' },
-                { name: 'Disney+', category: 'Video', network: 'Disney' },
-                { name: 'HBO Max', category: 'Video', network: 'Warner Bros. Discovery' },
-                { name: 'Microsoft 365', category: 'Productividad', network: 'Microsoft' },
-                { name: 'Amazon Prime Video', category: 'Video', network: 'Amazon' },
-                { name: 'Seguidores Instagram', category: 'Redes Sociales', network: 'Instagram' },
-                { name: 'Seguidores TikTok', category: 'Redes Sociales', network: 'TikTok' },
-                { name: 'Likes Instagram', category: 'Redes Sociales', network: 'Instagram' },
-                { name: 'Likes TikTok', category: 'Redes Sociales', network: 'TikTok' },
-                { name: 'Otro', category: 'Personalizado', network: 'N/A' }
-            ];
-            const addForm = document.getElementById('add-client-form');
-            const clientsTableBody = document.getElementById('clients-table-body');
-            const noClientsMessage = document.getElementById('no-clients-message');
-            const servicePurchasedSelect = document.getElementById('service-purchased');
-            const otherServiceWrapper = document.getElementById('other-service-wrapper');
-            const otherServiceName = document.getElementById('other-service-name');
-            const editModal = document.getElementById('edit-modal');
-            const editForm = document.getElementById('edit-client-form');
-            const editServiceSelect = document.getElementById('edit-service-purchased');
-            const editOtherServiceWrapper = document.getElementById('edit-other-service-wrapper');
-            const editOtherServiceName = document.getElementById('edit-other-service-name');
-            let editingClientIndex = null;
-            let clients = JSON.parse(localStorage.getItem('clients')) || [];
-            
-            // --- FUNCTIONS ---
-            const saveAndRerender = () => {
-                localStorage.setItem('clients', JSON.stringify(clients));
-                renderClients();
-            };
 
-            const renderServices = () => {
-                const selects = [servicePurchasedSelect, editServiceSelect];
-                selects.forEach(select => {
-                    select.innerHTML = `<option value="" disabled ${select.id === 'service-purchased' ? 'selected' : ''}>Selecciona un servicio</option>`;
-                });
-                
-                services.forEach(service => {
-                    selects.forEach(select => {
-                        const option = document.createElement('option');
-                        option.value = service.name;
-                        option.textContent = service.name;
-                        select.appendChild(option.cloneNode(true));
-                    });
-                });
-            };
-            
-            const renderClients = () => {
-                clientsTableBody.innerHTML = '';
-                noClientsMessage.style.display = clients.length === 0 ? 'block' : 'none';
-
-                clients.forEach((client, index) => {
-                    const purchaseDate = new Date(client.purchaseDate + 'T00:00:00');
-                    let warrantyCellHTML = '<p class="text-gray-500">Sin Garantía</p>';
-                    if (client.warrantyDays && client.warrantyDays > 0) {
-                        const warrantyEndDate = new Date(purchaseDate);
-                        warrantyEndDate.setDate(warrantyEndDate.getDate() + client.warrantyDays);
-                        const today = new Date();
-                        today.setHours(0,0,0,0);
-                        const isWarrantyExpired = warrantyEndDate < today;
-                        warrantyCellHTML = `<p class="${isWarrantyExpired ? 'status-expired' : 'status-active'}">Vence: ${warrantyEndDate.toLocaleDateString('es-ES')}</p>`;
-                    }
-
-                    let paymentStatusClass = client.paidAmount >= client.total ? 'status-paid' : (client.paidAmount > 0 ? 'status-partial' : 'status-pending');
-                    let paymentStatusText = client.paidAmount >= client.total ? 'Pagado' : (client.paidAmount > 0 ? 'Abonado' : 'Pendiente');
-                    let receiptLink = client.receipt ? `<a href="${client.receipt}" target="_blank" class="text-blue-400 hover:underline">Ver Foto</a>` : `<span class="text-gray-500">N/A</span>`;
-
-                    const row = document.createElement('tr');
-                    row.className = 'border-b border-gray-700 align-top';
-                    row.innerHTML = `
-                        <td class="px-4 py-3">
-                            <p class="font-medium text-white">${client.name}</p>
-                            <p class="text-xs text-gray-400">${client.service}</p>
-                             ${client.phone ? `<p class="text-xs text-blue-400 mt-1">${client.phone}</p>` : ''}
-                        </td>
-                        <td class="px-4 py-3 text-xs">
-                            <p>Compra: ${purchaseDate.toLocaleDateString('es-ES')}</p>
-                            ${warrantyCellHTML}
-                        </td>
-                        <td class="px-4 py-3 text-xs">
-                            <p>Total: ${client.total.toFixed(2)}</p>
-                            <p>Pagado: ${client.paidAmount.toFixed(2)}</p>
-                            <p>Resta: ${(client.total - client.paidAmount).toFixed(2)}</p>
-                        </td>
-                        <td class="px-4 py-3">
-                            <p class="font-bold ${paymentStatusClass}">${paymentStatusText}</p>
-                            <p class="text-xs mt-1">${client.delivered ? '✔️ Entregado' : '➖ Pendiente'}</p>
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center space-x-2">
-                                <button class="btn btn-primary text-white text-xs font-bold py-1 px-2 rounded" onclick="openEditModal(${index})">Editar</button>
-                                <button class="btn btn-danger text-white text-xs font-bold py-1 px-2 rounded" onclick="deleteClient(${index})">Eliminar</button>
-                                ${client.phone ? `<button class="btn btn-success text-white text-xs font-bold py-1 px-2 rounded" onclick="sendWhatsApp(${index})">WhatsApp</button>` : ''}
-                            </div>
-                            <div class="mt-2">${receiptLink}</div>
-                        </td>
-                    `;
-                    clientsTableBody.appendChild(row);
-                });
-            };
-
-            const addClient = (e) => {
-                e.preventDefault();
-                const price = parseFloat(addForm['price'].value) || 0;
-                const discount = parseFloat(addForm['discount'].value) || 0;
-                let serviceName = addForm['service-purchased'].value;
-                if (serviceName === 'Otro') {
-                    serviceName = addForm['other-service-name'].value;
-                }
-
-                const newClient = {
-                    name: addForm['client-name'].value,
-                    phone: addForm['client-phone'].value,
-                    service: serviceName,
-                    purchaseDate: addForm['purchase-date'].value,
-                    warrantyDays: parseInt(addForm['warranty-days'].value, 10) || 0,
-                    receipt: addForm['receipt-photo-url'].value || null,
-                    price: price,
-                    discount: discount,
-                    total: price - discount,
-                    paidAmount: parseFloat(addForm['paid-amount'].value) || 0,
-                    delivered: addForm['delivered'].checked
-                };
-                clients.push(newClient);
-                saveAndRerender();
-                addForm.reset();
-                addForm['warranty-days'].value = 30; 
-                otherServiceWrapper.classList.add('hidden');
-                otherServiceName.required = false;
-            };
-            
-            const saveClientChanges = (e) => {
-                e.preventDefault();
-                if (editingClientIndex === null) return;
-
-                const price = parseFloat(editForm['edit-price'].value) || 0;
-                const discount = parseFloat(editForm['edit-discount'].value) || 0;
-                let serviceName = editForm['edit-service-purchased'].value;
-                if (serviceName === 'Otro') {
-                    serviceName = editForm['edit-other-service-name'].value;
-                }
-
-                clients[editingClientIndex] = {
-                    name: editForm['edit-client-name'].value,
-                    phone: editForm['edit-client-phone'].value,
-                    service: serviceName,
-                    price: price,
-                    discount: discount,
-                    total: price - discount,
-                    paidAmount: parseFloat(editForm['edit-paid-amount'].value) || 0,
-                    purchaseDate: editForm['edit-purchase-date'].value,
-                    warrantyDays: parseInt(editForm['edit-warranty-days'].value, 10) || 0,
-                    receipt: editForm['edit-receipt-photo-url'].value,
-                    delivered: editForm['edit-delivered'].checked,
-                };
-
-                saveAndRerender();
-                closeEditModal();
-            };
-
-            // Making functions available globally for onclick attributes
-            window.deleteClient = (index) => {
-                if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
-                    clients.splice(index, 1);
-                    saveAndRerender();
-                }
-            };
-
-            window.openEditModal = (index) => {
-                editingClientIndex = index;
-                const client = clients[index];
-                editForm['edit-client-name'].value = client.name;
-                editForm['edit-client-phone'].value = client.phone;
-                
-                const isStandardService = services.some(s => s.name === client.service);
-                if (isStandardService) {
-                    editForm['edit-service-purchased'].value = client.service;
-                    editOtherServiceWrapper.classList.add('hidden');
-                    editOtherServiceName.required = false;
-                    editOtherServiceName.value = '';
-                } else {
-                    editForm['edit-service-purchased'].value = 'Otro';
-                    editOtherServiceWrapper.classList.remove('hidden');
-                    editOtherServiceName.required = true;
-                    editOtherServiceName.value = client.service;
-                }
-
-                editForm['edit-price'].value = client.price;
-                editForm['edit-discount'].value = client.discount;
-                editForm['edit-paid-amount'].value = client.paidAmount;
-                editForm['edit-purchase-date'].value = client.purchaseDate;
-                editForm['edit-warranty-days'].value = client.warrantyDays;
-                editForm['edit-receipt-photo-url'].value = client.receipt;
-                editForm['edit-delivered'].checked = client.delivered;
-                editModal.classList.remove('hidden');
-            };
-
-            window.closeEditModal = () => {
-                editModal.classList.add('hidden');
-                editingClientIndex = null;
-            };
-
-            window.sendWhatsApp = (index) => {
-                const client = clients[index];
-                if (!client.phone) {
-                    alert('Este cliente no tiene un número de teléfono registrado.');
-                    return;
-                }
-                const phoneNumber = client.phone.replace(/\D/g, '');
-                const fullPhoneNumber = phoneNumber.length > 8 ? phoneNumber : '506' + phoneNumber;
-                const thankYouImageUrl = 'https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/public/video/tarjeta%20agradecimiento%20negocio%20blanco%20negro%20dorado.png';
-                let message = `¡Hola ${client.name}! Gracias por tu compra de *${client.service}* en Lion Tech Solutions. Te agradecemos tu preferencia.\n\n${thankYouImageUrl}`;
-
-                if (client.receipt) {
-                    message += `\n\nAquí puedes ver tu comprobante de pago:\n${client.receipt}`;
-                }
-
-                const encodedMessage = encodeURIComponent(message);
-                const whatsappUrl = `https://wa.me/${fullPhoneNumber}?text=${encodedMessage}`;
-                window.open(whatsappUrl, '_blank');
-            };
-
-            // --- LOGIN LOGIC ---
             const handleLogin = (e) => {
                 e.preventDefault();
                 errorMessage.classList.add('hidden');
                 if (passwordInput.value === '1984') {
-                    localStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('isLoggedIn', 'true');
                     loginOverlay.classList.add('hidden');
                     mainContent.classList.remove('hidden');
+                    initializeApp();
                 } else {
                     errorMessage.classList.remove('hidden');
                     passwordInput.value = '';
@@ -557,52 +613,13 @@
                 }
             };
             
-            // --- INITIALIZATION ---
-            // Attach login listener
             loginForm.addEventListener('submit', handleLogin);
 
-            // Check if already logged in
-            if (localStorage.getItem('isLoggedIn') === 'true') {
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
                 loginOverlay.classList.add('hidden');
                 mainContent.classList.remove('hidden');
+                initializeApp();
             }
-            
-            // Migrate old data if necessary
-            clients = clients.map(client => {
-                if (client.warrantyDays === undefined) {
-                    return { ...client, warrantyDays: 30 };
-                }
-                return client;
-            });
-            saveAndRerender(); // Save migrated data immediately
-
-            // Attach main app event listeners
-            addForm.addEventListener('submit', addClient);
-            editForm.addEventListener('submit', saveClientChanges);
-            servicePurchasedSelect.addEventListener('change', () => {
-                if (servicePurchasedSelect.value === 'Otro') {
-                    otherServiceWrapper.classList.remove('hidden');
-                    otherServiceName.required = true;
-                } else {
-                    otherServiceWrapper.classList.add('hidden');
-                    otherServiceName.required = false;
-                    otherServiceName.value = '';
-                }
-            });
-            editServiceSelect.addEventListener('change', () => {
-                if (editServiceSelect.value === 'Otro') {
-                    editOtherServiceWrapper.classList.remove('hidden');
-                    editOtherServiceName.required = true;
-                } else {
-                    editOtherServiceWrapper.classList.add('hidden');
-                    editOtherServiceName.required = false;
-                    editOtherServiceName.value = '';
-                }
-            });
-
-            // Initial render
-            renderServices();
-            renderClients();
         });
     </script>
 </body>
