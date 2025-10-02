@@ -1,0 +1,612 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Clientes y Garantías</title>
+    <!-- Tailwind CSS para un diseño moderno y adaptable -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts para una tipografía más agradable -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos personalizados y tema oscuro */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* Fallback si la imagen no carga */
+            color: #d1d5db;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1; /* Pone el fondo detrás de todo el contenido */
+            background-image: url('https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/public/video/LionTech%20Solutions.png');
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            /* Filtros para mejorar la legibilidad del texto encima */
+            filter: blur(5px) brightness(0.3);
+            /* Pequeño truco para que los bordes del blur no se vean */
+            transform: scale(1.1);
+        }
+
+        .card {
+            background-color: rgba(31, 41, 55, 0.9); /* Ligeramente transparente */
+            border: 1px solid #374151;
+            backdrop-filter: blur(10px); /* Efecto de cristal esmerilado */
+        }
+        .table-header {
+            background-color: #374151;
+        }
+        .btn {
+            transition: all 0.2s ease;
+            transform: scale(1);
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .btn-primary { background-color: #3b82f6; }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-success { background-color: #22c55e; }
+        .btn-success:hover { background-color: #16a34a; }
+        .btn-secondary { background-color: #6b7280; }
+        .btn-secondary:hover { background-color: #4b5563; }
+
+        .status-active { color: #4ade80; /* Verde */ }
+        .status-expired { color: #f87171; /* Rojo */ }
+        .status-paid { color: #4ade80; /* Verde */ }
+        .status-partial { color: #facc15; /* Amarillo */ }
+        .status-pending { color: #f87171; /* Rojo */ }
+
+        .input-field {
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            color: #d1d5db;
+        }
+        .input-field::placeholder { color: #9ca3af; }
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px #1e40af;
+        }
+        /* Estilos para el Modal de Edición */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Animación para error de contraseña */
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .animate-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+
+    <!-- Pantalla de Login -->
+    <div id="login-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-80">
+        <div class="card p-8 rounded-lg shadow-xl w-full max-w-sm">
+            <img src="https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/public/video/imagen_2025-10-02_114428033.png" alt="Logo" class="mx-auto mb-6 w-20 h-20 rounded-full">
+            <h2 class="text-2xl font-bold text-white text-center mb-6">Acceso Protegido</h2>
+            <form id="login-form">
+                <label for="password" class="block text-sm font-medium mb-2">Contraseña</label>
+                <input type="password" id="password" class="input-field w-full p-2 rounded-md text-center" required>
+                <p id="error-message" class="text-red-500 text-sm mt-2 text-center hidden">Contraseña incorrecta.</p>
+                <button type="submit" class="btn btn-primary w-full mt-6 text-white font-bold py-2 px-4 rounded-md">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contenido Principal (Oculto hasta el login) -->
+    <div id="main-content" class="hidden">
+        <div class="max-w-7xl mx-auto">
+
+            <!-- Encabezado con el nombre de la empresa y logo -->
+            <header class="text-center mb-10">
+                <img src="https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/public/video/imagen_2025-10-02_114428033.png" alt="Logo Lion Tech Solutions" class="mx-auto mb-4 w-24 h-24 rounded-full">
+                <h1 class="text-4xl sm:text-5xl font-bold text-white">Lion Tech Solutions</h1>
+                <p class="text-lg text-gray-400 mt-2">Panel de Gestión de Clientes y Catálogo de Servicios</p>
+            </header>
+
+            <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- Columna Izquierda: Agregar Cliente -->
+                <div class="lg:col-span-1">
+                    <div class="card p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-bold text-white mb-6">Registrar Nueva Venta</h2>
+                        <form id="add-client-form" class="space-y-4">
+                            <div>
+                                <label for="client-name" class="block text-sm font-medium mb-1">Nombre del Cliente</label>
+                                <input type="text" id="client-name" class="input-field w-full p-2 rounded-md" placeholder="Ej: Juan Pérez" required>
+                            </div>
+                            <div>
+                                <label for="client-phone" class="block text-sm font-medium mb-1">Teléfono (WhatsApp)</label>
+                                <input type="tel" id="client-phone" class="input-field w-full p-2 rounded-md" placeholder="Ej: 88887777" required>
+                            </div>
+                            <div>
+                                <label for="service-purchased" class="block text-sm font-medium mb-1">Servicio Comprado</label>
+                                <select id="service-purchased" class="input-field w-full p-2 rounded-md" required>
+                                    <option value="" disabled selected>Selecciona un servicio</option>
+                                </select>
+                            </div>
+                            <div id="other-service-wrapper" class="hidden">
+                                <label for="other-service-name" class="block text-sm font-medium mb-1">Nombre del Servicio Personalizado</label>
+                                <input type="text" id="other-service-name" class="input-field w-full p-2 rounded-md" placeholder="Escribe el nombre del servicio">
+                            </div>
+                             <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="price" class="block text-sm font-medium mb-1">Precio</label>
+                                    <input type="number" id="price" class="input-field w-full p-2 rounded-md" placeholder="0.00" step="0.01" required>
+                                </div>
+                                <div>
+                                    <label for="discount" class="block text-sm font-medium mb-1">Descuento</label>
+                                    <input type="number" id="discount" class="input-field w-full p-2 rounded-md" placeholder="0.00" step="0.01" value="0">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="paid-amount" class="block text-sm font-medium mb-1">Monto Pagado</label>
+                                <input type="number" id="paid-amount" class="input-field w-full p-2 rounded-md" placeholder="0.00" step="0.01" value="0">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                 <div>
+                                    <label for="purchase-date" class="block text-sm font-medium mb-1">Fecha de Compra</label>
+                                    <input type="date" id="purchase-date" class="input-field w-full p-2 rounded-md" required>
+                                </div>
+                                <div>
+                                    <label for="warranty-days" class="block text-sm font-medium mb-1">Garantía (días)</label>
+                                    <input type="number" id="warranty-days" class="input-field w-full p-2 rounded-md" placeholder="Ej: 30" value="30" min="0" required>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="receipt-photo-url" class="block text-sm font-medium mb-1">URL del Comprobante</label>
+                                <input type="url" id="receipt-photo-url" class="input-field w-full p-2 rounded-md" placeholder="https://url/foto.png">
+                                <p class="text-xs text-gray-500 mt-1">Debe ser una URL directa a la imagen (.png, .jpg).</p>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="delivered" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-gray-700">
+                                <label for="delivered" class="ml-2 block text-sm">Marcar como Entregado</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full text-white font-bold py-2 px-4 rounded-md">
+                                Agregar Cliente
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Lista de Clientes -->
+                <div class="lg:col-span-2">
+                    <div class="card p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-bold text-white mb-6">Registro Detallado de Consumidores</h2>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm text-left">
+                                <thead class="table-header text-xs text-gray-300 uppercase rounded-t-lg">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3">Cliente / Servicio</th>
+                                        <th scope="col" class="px-4 py-3">Fechas y Garantía</th>
+                                        <th scope="col" class="px-4 py-3">Pagos</th>
+                                        <th scope="col" class="px-4 py-3">Estado</th>
+                                        <th scope="col" class="px-4 py-3">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clients-table-body">
+                                    <!-- Las filas de clientes se insertarán aquí -->
+                                </tbody>
+                            </table>
+                            <p id="no-clients-message" class="text-center text-gray-400 py-8">Aún no hay clientes registrados.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proveedores y Contacto -->
+                <div class="lg:col-span-3 mt-8">
+                     <div class="card p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-bold text-white mb-6">Proveedores y Contacto</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                            <a href="https://smmprovider.co" target="_blank" rel="noopener noreferrer" class="block p-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition">
+                                <h3 class="font-bold text-white">SMM Provider</h3>
+                                <p class="text-sm text-blue-400 hover:underline">smmprovider.co</p>
+                            </a>
+                            <a href="https://proveedoresstreaming.com" target="_blank" rel="noopener noreferrer" class="block p-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition">
+                                <h3 class="font-bold text-white">Proveedores Streaming</h3>
+                                <p class="text-sm text-blue-400 hover:underline">proveedoresstreaming.com</p>
+                            </a>
+                            <a href="https://wa.me/59172778939" target="_blank" rel="noopener noreferrer" class="block p-4 rounded-lg bg-green-600 hover:bg-green-700 transition">
+                                <h3 class="font-bold text-white">Contacto WhatsApp</h3>
+                                <p class="text-sm text-gray-200">+591 72778939</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Cliente -->
+    <div id="edit-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="card rounded-lg shadow-xl p-6 w-full max-w-lg m-4 overflow-y-auto max-h-screen">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-white">Editar Información</h2>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <form id="edit-client-form" class="space-y-4">
+                <div>
+                    <label for="edit-client-name" class="block text-sm font-medium mb-1">Nombre del Cliente</label>
+                    <input type="text" id="edit-client-name" class="input-field w-full p-2 rounded-md" required>
+                </div>
+                <div>
+                    <label for="edit-client-phone" class="block text-sm font-medium mb-1">Teléfono (WhatsApp)</label>
+                    <input type="tel" id="edit-client-phone" class="input-field w-full p-2 rounded-md" required>
+                </div>
+                <div>
+                    <label for="edit-service-purchased" class="block text-sm font-medium mb-1">Servicio Comprado</label>
+                    <select id="edit-service-purchased" class="input-field w-full p-2 rounded-md" required></select>
+                </div>
+                 <div id="edit-other-service-wrapper" class="hidden">
+                    <label for="edit-other-service-name" class="block text-sm font-medium mb-1">Nombre del Servicio Personalizado</label>
+                    <input type="text" id="edit-other-service-name" class="input-field w-full p-2 rounded-md" placeholder="Escribe el nombre del servicio">
+                </div>
+                 <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-price" class="block text-sm font-medium">Precio</label>
+                        <input type="number" id="edit-price" class="input-field w-full p-2 rounded-md" step="0.01" required>
+                    </div>
+                    <div>
+                        <label for="edit-discount" class="block text-sm font-medium">Descuento</label>
+                        <input type="number" id="edit-discount" class="input-field w-full p-2 rounded-md" step="0.01">
+                    </div>
+                </div>
+                <div>
+                    <label for="edit-paid-amount" class="block text-sm font-medium mb-1">Monto Pagado</label>
+                    <input type="number" id="edit-paid-amount" class="input-field w-full p-2 rounded-md" step="0.01">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-purchase-date" class="block text-sm font-medium mb-1">Fecha de Compra</label>
+                        <input type="date" id="edit-purchase-date" class="input-field w-full p-2 rounded-md" required>
+                    </div>
+                     <div>
+                        <label for="edit-warranty-days" class="block text-sm font-medium mb-1">Garantía (días)</label>
+                        <input type="number" id="edit-warranty-days" class="input-field w-full p-2 rounded-md" min="0" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="edit-receipt-photo-url" class="block text-sm font-medium mb-1">URL del Comprobante</label>
+                    <input type="url" id="edit-receipt-photo-url" class="input-field w-full p-2 rounded-md">
+                    <p class="text-xs text-gray-500 mt-1">Debe ser una URL directa a la imagen (.png, .jpg).</p>
+                </div>
+                <div class="flex items-center">
+                    <input id="edit-delivered" type="checkbox" class="h-4 w-4 rounded bg-gray-700">
+                    <label for="edit-delivered" class="ml-2 block text-sm">Marcar como Entregado</label>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="closeEditModal()" class="btn btn-secondary text-white font-bold py-2 px-4 rounded-md">Cancelar</button>
+                    <button type="submit" class="btn btn-primary text-white font-bold py-2 px-4 rounded-md">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- LOGIN ELEMENTS AND LOGIC ---
+            const loginOverlay = document.getElementById('login-overlay');
+            const mainContent = document.getElementById('main-content');
+            const loginForm = document.getElementById('login-form');
+            const passwordInput = document.getElementById('password');
+            const errorMessage = document.getElementById('error-message');
+
+            const initializeApp = () => {
+                const services = [
+                    { name: 'Canva Pro', category: 'Diseño', network: 'Canva' },
+                    { name: 'Gemini Pro', category: 'IA', network: 'Google' },
+                    { name: 'YouTube Premium', category: 'Video', network: 'Google' },
+                    { name: 'Adobe Creative Cloud', category: 'Productividad', network: 'Adobe' },
+                    { name: 'Netflix', category: 'Video', network: 'Netflix' },
+                    { name: 'Spotify Premium', category: 'Música', network: 'Spotify' },
+                    { name: 'Disney+', category: 'Video', network: 'Disney' },
+                    { name: 'HBO Max', category: 'Video', network: 'Warner Bros. Discovery' },
+                    { name: 'Microsoft 365', category: 'Productividad', network: 'Microsoft' },
+                    { name: 'Amazon Prime Video', category: 'Video', network: 'Amazon' },
+                    { name: 'Seguidores Instagram', category: 'Redes Sociales', network: 'Instagram' },
+                    { name: 'Seguidores TikTok', category: 'Redes Sociales', network: 'TikTok' },
+                    { name: 'Likes Instagram', category: 'Redes Sociales', network: 'Instagram' },
+                    { name: 'Likes TikTok', category: 'Redes Sociales', network: 'TikTok' },
+                    { name: 'Otro', category: 'Personalizado', network: 'N/A' }
+                ];
+
+                const addForm = document.getElementById('add-client-form');
+                const clientsTableBody = document.getElementById('clients-table-body');
+                const noClientsMessage = document.getElementById('no-clients-message');
+                const servicePurchasedSelect = document.getElementById('service-purchased');
+                const otherServiceWrapper = document.getElementById('other-service-wrapper');
+                const otherServiceName = document.getElementById('other-service-name');
+                const editModal = document.getElementById('edit-modal');
+                const editForm = document.getElementById('edit-client-form');
+                const editServiceSelect = document.getElementById('edit-service-purchased');
+                const editOtherServiceWrapper = document.getElementById('edit-other-service-wrapper');
+                const editOtherServiceName = document.getElementById('edit-other-service-name');
+                let editingClientIndex = null;
+                let clients = JSON.parse(localStorage.getItem('clients')) || [];
+                clients = clients.map(client => {
+                    if (client.warrantyDays === undefined) {
+                        return { ...client, warrantyDays: 30 };
+                    }
+                    return client;
+                });
+
+                const renderServices = () => {
+                    const selects = [servicePurchasedSelect, editServiceSelect];
+                    selects.forEach(select => {
+                        select.innerHTML = `<option value="" disabled ${select.id === 'service-purchased' ? 'selected' : ''}>Selecciona un servicio</option>`;
+                    });
+                    
+                    services.forEach(service => {
+                        selects.forEach(select => {
+                            const option = document.createElement('option');
+                            option.value = service.name;
+                            option.textContent = service.name;
+                            select.appendChild(option.cloneNode(true));
+                        });
+                    });
+                };
+                
+                const renderClients = () => {
+                    clientsTableBody.innerHTML = '';
+                    noClientsMessage.style.display = clients.length === 0 ? 'block' : 'none';
+
+                    clients.forEach((client, index) => {
+                        const purchaseDate = new Date(client.purchaseDate + 'T00:00:00');
+                        
+                        let warrantyCellHTML = '<p class="text-gray-500">Sin Garantía</p>';
+                        if (client.warrantyDays && client.warrantyDays > 0) {
+                            const warrantyEndDate = new Date(purchaseDate);
+                            warrantyEndDate.setDate(warrantyEndDate.getDate() + client.warrantyDays);
+                            const today = new Date();
+                            today.setHours(0,0,0,0);
+                            const isWarrantyExpired = warrantyEndDate < today;
+                            warrantyCellHTML = `<p class="${isWarrantyExpired ? 'status-expired' : 'status-active'}">Vence: ${warrantyEndDate.toLocaleDateString('es-ES')}</p>`;
+                        }
+
+                        let paymentStatusClass = client.paidAmount >= client.total ? 'status-paid' : (client.paidAmount > 0 ? 'status-partial' : 'status-pending');
+                        let paymentStatusText = client.paidAmount >= client.total ? 'Pagado' : (client.paidAmount > 0 ? 'Abonado' : 'Pendiente');
+                        
+                        let receiptLink = client.receipt ? `<a href="${client.receipt}" target="_blank" class="text-blue-400 hover:underline">Ver Foto</a>` : `<span class="text-gray-500">N/A</span>`;
+
+                        const row = document.createElement('tr');
+                        row.className = 'border-b border-gray-700 align-top';
+                        row.innerHTML = `
+                            <td class="px-4 py-3">
+                                <p class="font-medium text-white">${client.name}</p>
+                                <p class="text-xs text-gray-400">${client.service}</p>
+                                 ${client.phone ? `<p class="text-xs text-blue-400 mt-1">${client.phone}</p>` : ''}
+                            </td>
+                            <td class="px-4 py-3 text-xs">
+                                <p>Compra: ${purchaseDate.toLocaleDateString('es-ES')}</p>
+                                ${warrantyCellHTML}
+                            </td>
+                            <td class="px-4 py-3 text-xs">
+                                <p>Total: ${client.total.toFixed(2)}</p>
+                                <p>Pagado: ${client.paidAmount.toFixed(2)}</p>
+                                <p>Resta: ${(client.total - client.paidAmount).toFixed(2)}</p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <p class="font-bold ${paymentStatusClass}">${paymentStatusText}</p>
+                                <p class="text-xs mt-1">${client.delivered ? ✔️ Entregado' : '➖ Pendiente'}</p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary text-white text-xs font-bold py-1 px-2 rounded" onclick="openEditModal(${index})">Editar</button>
+                                    <button class="btn btn-danger text-white text-xs font-bold py-1 px-2 rounded" onclick="deleteClient(${index})">Eliminar</button>
+                                    ${client.phone ? `<button class="btn btn-success text-white text-xs font-bold py-1 px-2 rounded" onclick="sendWhatsApp(${index})">WhatsApp</button>` : ''}
+                                </div>
+                                <div class="mt-2">${receiptLink}</div>
+                            </td>
+                        `;
+                        clientsTableBody.appendChild(row);
+                    });
+                };
+
+                const addClient = (e) => {
+                    e.preventDefault();
+                    const price = parseFloat(addForm['price'].value) || 0;
+                    const discount = parseFloat(addForm['discount'].value) || 0;
+                    
+                    let serviceName = addForm['service-purchased'].value;
+                    if (serviceName === 'Otro') {
+                        serviceName = addForm['other-service-name'].value;
+                    }
+
+                    const newClient = {
+                        name: addForm['client-name'].value,
+                        phone: addForm['client-phone'].value,
+                        service: serviceName,
+                        purchaseDate: addForm['purchase-date'].value,
+                        warrantyDays: parseInt(addForm['warranty-days'].value, 10) || 0,
+                        receipt: addForm['receipt-photo-url'].value || null,
+                        price: price,
+                        discount: discount,
+                        total: price - discount,
+                        paidAmount: parseFloat(addForm['paid-amount'].value) || 0,
+                        delivered: addForm['delivered'].checked
+                    };
+                    clients.push(newClient);
+                    saveAndRerender();
+                    addForm.reset();
+                    addForm['warranty-days'].value = 30; 
+                    otherServiceWrapper.classList.add('hidden');
+                    otherServiceName.required = false;
+                };
+                
+                window.deleteClient = (index) => {
+                    if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+                        clients.splice(index, 1);
+                        saveAndRerender();
+                    }
+                };
+
+                window.openEditModal = (index) => {
+                    editingClientIndex = index;
+                    const client = clients[index];
+                    editForm['edit-client-name'].value = client.name;
+                    editForm['edit-client-phone'].value = client.phone;
+                    
+                    const isStandardService = services.some(s => s.name === client.service);
+                    
+                    if (isStandardService) {
+                        editForm['edit-service-purchased'].value = client.service;
+                        editOtherServiceWrapper.classList.add('hidden');
+                        editOtherServiceName.required = false;
+                        editOtherServiceName.value = '';
+                    } else {
+                        editForm['edit-service-purchased'].value = 'Otro';
+                        editOtherServiceWrapper.classList.remove('hidden');
+                        editOtherServiceName.required = true;
+                        editOtherServiceName.value = client.service;
+                    }
+
+                    editForm['edit-price'].value = client.price;
+                    editForm['edit-discount'].value = client.discount;
+                    editForm['edit-paid-amount'].value = client.paidAmount;
+                    editForm['edit-purchase-date'].value = client.purchaseDate;
+                    editForm['edit-warranty-days'].value = client.warrantyDays;
+                    editForm['edit-receipt-photo-url'].value = client.receipt;
+                    editForm['edit-delivered'].checked = client.delivered;
+                    editModal.classList.remove('hidden');
+                };
+
+                window.closeEditModal = () => {
+                    editModal.classList.add('hidden');
+                    editingClientIndex = null;
+                };
+
+                const saveClientChanges = (e) => {
+                    e.preventDefault();
+                    if (editingClientIndex === null) return;
+
+                    const price = parseFloat(editForm['edit-price'].value) || 0;
+                    const discount = parseFloat(editForm['edit-discount'].value) || 0;
+
+                    let serviceName = editForm['edit-service-purchased'].value;
+                    if (serviceName === 'Otro') {
+                        serviceName = editForm['edit-other-service-name'].value;
+                    }
+
+                    clients[editingClientIndex] = {
+                        name: editForm['edit-client-name'].value,
+                        phone: editForm['edit-client-phone'].value,
+                        service: serviceName,
+                        price: price,
+                        discount: discount,
+                        total: price - discount,
+                        paidAmount: parseFloat(editForm['edit-paid-amount'].value) || 0,
+                        purchaseDate: editForm['edit-purchase-date'].value,
+                        warrantyDays: parseInt(editForm['edit-warranty-days'].value, 10) || 0,
+                        receipt: editForm['edit-receipt-photo-url'].value,
+                        delivered: editForm['edit-delivered'].checked,
+                    };
+
+                    saveAndRerender();
+                    closeEditModal();
+                };
+
+                window.sendWhatsApp = (index) => {
+                    const client = clients[index];
+                    if (!client.phone) {
+                        alert('Este cliente no tiene un número de teléfono registrado.');
+                        return;
+                    }
+                    const phoneNumber = client.phone.replace(/\D/g, '');
+                    const fullPhoneNumber = phoneNumber.length > 8 ? phoneNumber : '506' + phoneNumber;
+
+                    const thankYouImageUrl = 'https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/public/video/tarjeta%20agradecimiento%20negocio%20blanco%20negro%20dorado.png';
+                    
+                    let message = `¡Hola ${client.name}! Gracias por tu compra de *${client.service}* en Lion Tech Solutions. Te agradecemos tu preferencia.\n\n${thankYouImageUrl}`;
+
+                    if (client.receipt) {
+                        message += `\n\nAquí puedes ver tu comprobante de pago:\n${client.receipt}`;
+                    }
+
+                    const encodedMessage = encodeURIComponent(message);
+                    const whatsappUrl = `https://wa.me/${fullPhoneNumber}?text=${encodedMessage}`;
+                    window.open(whatsappUrl, '_blank');
+                };
+                
+                const saveAndRerender = () => {
+                    localStorage.setItem('clients', JSON.stringify(clients));
+                    renderClients();
+                };
+                
+                servicePurchasedSelect.addEventListener('change', () => {
+                    if (servicePurchasedSelect.value === 'Otro') {
+                        otherServiceWrapper.classList.remove('hidden');
+                        otherServiceName.required = true;
+                    } else {
+                        otherServiceWrapper.classList.add('hidden');
+                        otherServiceName.required = false;
+                        otherServiceName.value = '';
+                    }
+                });
+
+                editServiceSelect.addEventListener('change', () => {
+                    if (editServiceSelect.value === 'Otro') {
+                        editOtherServiceWrapper.classList.remove('hidden');
+                        editOtherServiceName.required = true;
+                    } else {
+                        editOtherServiceWrapper.classList.add('hidden');
+                        editOtherServiceName.required = false;
+                        editOtherServiceName.value = '';
+                    }
+                });
+
+                addForm.addEventListener('submit', addClient);
+                editForm.addEventListener('submit', saveClientChanges);
+                renderServices();
+                renderClients();
+            };
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                errorMessage.classList.add('hidden');
+                if (passwordInput.value === '1984') {
+                    localStorage.setItem('isLoggedIn', 'true');
+                    loginOverlay.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    initializeApp(); // Initialize the app only after successful login
+                } else {
+                    errorMessage.classList.remove('hidden');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                    loginForm.parentElement.classList.add('animate-shake');
+                    setTimeout(() => {
+                        loginForm.parentElement.classList.remove('animate-shake');
+                    }, 500);
+                }
+            };
+
+            loginForm.addEventListener('submit', handleLogin);
+
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                loginOverlay.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                initializeApp();
+            }
+        });
+    </script>
+</body>
+</html>
+
