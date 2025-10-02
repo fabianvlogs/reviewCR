@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Estilos personalizados y tema oscuro */
         body {
@@ -107,6 +109,19 @@
                 <p id="error-message" class="text-red-500 text-sm mt-2 text-center hidden">Contraseña incorrecta.</p>
                 <button type="submit" class="btn btn-primary w-full mt-6 text-white font-bold py-2 px-4 rounded-md">Entrar</button>
             </form>
+            <div class="mt-8 text-center">
+                <p class="text-sm text-gray-400 mb-4">Síguenos en nuestras redes</p>
+                <div class="flex justify-center items-center gap-6">
+                    <!-- Instagram -->
+                    <a href="https://www.instagram.com/liontech_solutionscr" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-white transition transform hover:scale-110">
+                        <img src="https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/sign/REDES%20SOCIALES/IG.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kYWFkN2FmMS03YWU1LTQwNjctYWRmZS1lOTJkYTkwNjYyYTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJSRURFUyBTT0NJQUxFUy9JRy5wbmciLCJpYXQiOjE3NTk0NDMzNzYsImV4cCI6MTc5MDk3OTM3Nn0.k8FDzBTv-pC69ye0ZCMcbb3wLgGiV4QzjW8KtBmC8tk" alt="Instagram" class="w-8 h-8">
+                    </a>
+                    <!-- Facebook -->
+                    <a href="https://www.facebook.com/PauCr2" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-white transition transform hover:scale-110">
+                        <img src="https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/sign/REDES%20SOCIALES/FACBOK.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kYWFkN2FmMS03YWU1LTQwNjctYWRmZS1lOTJkYTkwNjYyYTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJSRURFUyBTT0NJQUxFUy9GQUNCT0sucG5nIiwiaWF0IjoxNzU5NDQzNTQyLCJleHAiOjE3OTA5Nzk1NDJ9.UagKjS-HgPdLW9JtJlkuqDX5Ba77R9PtwpQYQ42-jdE" alt="Facebook" class="w-8 h-8">
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -231,6 +246,26 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Redes Sociales -->
+                <div class="lg:col-span-3 mt-8">
+                     <div class="card p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-bold text-white mb-6 text-center">Síguenos en Redes Sociales</h2>
+                        <div class="flex justify-center items-center gap-8 sm:gap-16">
+                            <!-- Instagram -->
+                            <a href="https://www.instagram.com/liontech_solutionscr" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center text-gray-300 hover:text-white transition transform hover:scale-110">
+                                <img src="https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/sign/REDES%20SOCIALES/IG.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kYWFkN2FmMS03YWU1LTQwNjctYWRmZS1lOTJkYTkwNjYyYTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJSRURFUyBTT0NJQUxFUy9JRy5wbmciLCJpYXQiOjE3NTk0NDMzNzYsImV4cCI6MTc5MDk3OTM3Nn0.k8FDzBTv-pC69ye0ZCMcbb3wLgGiV4QzjW8KtBmC8tk" alt="Instagram" class="w-12 h-12 mb-2">
+                                <span class="text-sm">@liontech_solutionscr</span>
+                            </a>
+                            <!-- Facebook -->
+                            <a href="https://www.facebook.com/PauCr2" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center text-gray-300 hover:text-white transition transform hover:scale-110">
+                                <img src="https://ltqoiavjtsqedjpurgnm.supabase.co/storage/v1/object/sign/REDES%20SOCIALES/FACBOK.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kYWFkN2FmMS03YWU1LTQwNjctYWRmZS1lOTJkYTkwNjYyYTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJSRURFUyBTT0NJQUxFUy9GQUNCT0sucG5nIiwiaWF0IjoxNzU5NDQzNTQyLCJleHAiOjE3OTA5Nzk1NDJ9.UagKjS-HgPdLW9JtJlkuqDX5Ba77R9PtwpQYQ42-jdE" alt="Facebook" class="w-12 h-12 mb-2">
+                                <span class="text-sm">PauCr2</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
             </main>
         </div>
     </div>
@@ -243,6 +278,7 @@
                 <button onclick="closeEditModal()" class="text-gray-400 hover:text-white text-3xl">&times;</button>
             </div>
             <form id="edit-client-form" class="space-y-4">
+                 <input type="hidden" id="edit-client-id">
                 <div>
                     <label for="edit-client-name" class="block text-sm font-medium mb-1">Nombre del Cliente</label>
                     <input type="text" id="edit-client-name" class="input-field w-full p-2 rounded-md" required>
@@ -304,7 +340,12 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
-            function initializeApp() {
+            async function initializeApp() {
+                // --- CONFIGURACIÓN DE SUPERBASE ---
+                const supabaseUrl = 'https://ltqoiavjtsqedjpurgnm.supabase.co'; 
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cW9pYXZqdHNxZWRqcHVyZ25tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMjk4MzksImV4cCI6MjA3NDYwNTgzOX0.yzPh_5ONIsxmq0nsL2YPlWMGMWRE-tLPYi8Eo-TRZiI';
+                const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
                 // --- APP ELEMENTS ---
                 const services = [
                     { name: 'Canva Pro', category: 'Diseño', network: 'Canva' },
@@ -335,8 +376,7 @@
                 const editOtherServiceWrapper = document.getElementById('edit-other-service-wrapper');
                 const editOtherServiceName = document.getElementById('edit-other-service-name');
                 const logoutButton = document.getElementById('logout-button');
-                let editingClientIndex = null;
-                let clients = JSON.parse(localStorage.getItem('clients')) || [];
+                let clients = [];
                 let inactivityTimer;
 
                 // --- FUNCTIONS ---
@@ -350,9 +390,15 @@
                     inactivityTimer = setTimeout(logout, 5 * 60 * 1000); // 5 minutes in milliseconds
                 };
 
-                const saveAndRerender = () => {
-                    localStorage.setItem('clients', JSON.stringify(clients));
-                    renderClients();
+                const fetchClients = async () => {
+                    const { data, error } = await supabaseClient.from('clientes').select('*').order('created_at', { ascending: false });
+                    if (error) {
+                        console.error('Error fetching clients:', error);
+                        alert(`Error al cargar clientes: ${error.message}`);
+                    } else {
+                        clients = data;
+                        renderClients();
+                    }
                 };
 
                 const renderServices = () => {
@@ -375,7 +421,7 @@
                     clientsTableBody.innerHTML = '';
                     noClientsMessage.style.display = clients.length === 0 ? 'block' : 'none';
 
-                    clients.forEach((client, index) => {
+                    clients.forEach((client) => {
                         const purchaseDate = new Date(client.purchaseDate + 'T00:00:00');
                         let warrantyCellHTML = '<p class="text-gray-500">Sin Garantía</p>';
                         if (client.warrantyDays && client.warrantyDays > 0) {
@@ -414,9 +460,9 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center space-x-2">
-                                    <button class="btn btn-primary text-white text-xs font-bold py-1 px-2 rounded" onclick="openEditModal(${index})">Editar</button>
-                                    <button class="btn btn-danger text-white text-xs font-bold py-1 px-2 rounded" onclick="deleteClient(${index})">Eliminar</button>
-                                    ${client.phone ? `<button class="btn btn-success text-white text-xs font-bold py-1 px-2 rounded" onclick="sendWhatsApp(${index})">WhatsApp</button>` : ''}
+                                    <button class="btn btn-primary text-white text-xs font-bold py-1 px-2 rounded" onclick="openEditModal(${client.id})">Editar</button>
+                                    <button class="btn btn-danger text-white text-xs font-bold py-1 px-2 rounded" onclick="deleteClient(${client.id})">Eliminar</button>
+                                    ${client.phone ? `<button class="btn btn-success text-white text-xs font-bold py-1 px-2 rounded" onclick="sendWhatsApp(${client.id})">WhatsApp</button>` : ''}
                                 </div>
                                 <div class="mt-2">${receiptLink}</div>
                             </td>
@@ -425,7 +471,7 @@
                     });
                 };
 
-                const addClient = (e) => {
+                const addClient = async (e) => {
                     e.preventDefault();
                     const price = parseFloat(addForm['price'].value) || 0;
                     const discount = parseFloat(addForm['discount'].value) || 0;
@@ -447,17 +493,24 @@
                         paidAmount: parseFloat(addForm['paid-amount'].value) || 0,
                         delivered: addForm['delivered'].checked
                     };
-                    clients.push(newClient);
-                    saveAndRerender();
-                    addForm.reset();
-                    addForm['warranty-days'].value = 30; 
-                    otherServiceWrapper.classList.add('hidden');
-                    otherServiceName.required = false;
+                    
+                    const { error } = await supabaseClient.from('clientes').insert([newClient]);
+                    if (error) {
+                        console.error('Error adding client:', error);
+                        alert('No se pudo agregar el cliente.');
+                    } else {
+                        await fetchClients();
+                        addForm.reset();
+                        addForm['warranty-days'].value = 30; 
+                        otherServiceWrapper.classList.add('hidden');
+                        otherServiceName.required = false;
+                    }
                 };
                 
-                const saveClientChanges = (e) => {
+                const saveClientChanges = async (e) => {
                     e.preventDefault();
-                    if (editingClientIndex === null) return;
+                    const clientId = document.getElementById('edit-client-id').value;
+                    if (!clientId) return;
 
                     const price = parseFloat(editForm['edit-price'].value) || 0;
                     const discount = parseFloat(editForm['edit-discount'].value) || 0;
@@ -466,7 +519,7 @@
                         serviceName = editForm['edit-other-service-name'].value;
                     }
 
-                    clients[editingClientIndex] = {
+                    const updatedClient = {
                         name: editForm['edit-client-name'].value,
                         phone: editForm['edit-client-phone'].value,
                         service: serviceName,
@@ -480,20 +533,34 @@
                         delivered: editForm['edit-delivered'].checked,
                     };
 
-                    saveAndRerender();
-                    closeEditModal();
-                };
+                    const { error } = await supabaseClient.from('clientes').update(updatedClient).eq('id', clientId);
 
-                window.deleteClient = (index) => {
-                    if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
-                        clients.splice(index, 1);
-                        saveAndRerender();
+                    if (error) {
+                        console.error('Error updating client:', error);
+                        alert('No se pudo actualizar el cliente.');
+                    } else {
+                        await fetchClients();
+                        closeEditModal();
                     }
                 };
 
-                window.openEditModal = (index) => {
-                    editingClientIndex = index;
-                    const client = clients[index];
+                window.deleteClient = async (id) => {
+                    if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+                        const { error } = await supabaseClient.from('clientes').delete().eq('id', id);
+                        if (error) {
+                            console.error('Error deleting client:', error);
+                            alert('No se pudo eliminar el cliente.');
+                        } else {
+                            await fetchClients();
+                        }
+                    }
+                };
+
+                window.openEditModal = (id) => {
+                    const client = clients.find(c => c.id === id);
+                    if (!client) return;
+
+                    document.getElementById('edit-client-id').value = client.id;
                     editForm['edit-client-name'].value = client.name;
                     editForm['edit-client-phone'].value = client.phone;
                     
@@ -522,12 +589,11 @@
 
                 window.closeEditModal = () => {
                     editModal.classList.add('hidden');
-                    editingClientIndex = null;
                 };
 
-                window.sendWhatsApp = (index) => {
-                    const client = clients[index];
-                    if (!client.phone) {
+                window.sendWhatsApp = (id) => {
+                    const client = clients.find(c => c.id === id);
+                    if (!client || !client.phone) {
                         alert('Este cliente no tiene un número de teléfono registrado.');
                         return;
                     }
@@ -546,13 +612,6 @@
                 };
 
                 // --- APP INITIALIZATION ---
-                clients = clients.map(client => {
-                    if (client.warrantyDays === undefined) {
-                        return { ...client, warrantyDays: 30 };
-                    }
-                    return client;
-                });
-                
                 addForm.addEventListener('submit', addClient);
                 editForm.addEventListener('submit', saveClientChanges);
                 logoutButton.addEventListener('click', logout);
@@ -584,7 +643,7 @@
                 );
 
                 renderServices();
-                renderClients();
+                await fetchClients();
             }
 
             // --- LOGIN LOGIC & INITIAL PAGE LOAD ---
