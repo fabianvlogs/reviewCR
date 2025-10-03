@@ -340,7 +340,12 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
-            function initializeApp() {
+            async function initializeApp() {
+                // --- CONFIGURACIÓN DE SUPERBASE ---
+                const supabaseUrl = 'https://gujdykyfrmgamrawzlwa.supabase.co'; 
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1amR5a3lmcm1nYW1yYXd6bHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxMDk2OTUsImV4cCI6MjA3NDY4NTY5NX0.bo5SH17z240syEp-UvVIj3ogXOKl7RIGec-4crdVp0s';
+                const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
                 // --- APP ELEMENTS ---
                 const services = [
                     { name: 'Canva Pro', category: 'Diseño', network: 'Canva' },
@@ -371,8 +376,7 @@
                 const editOtherServiceWrapper = document.getElementById('edit-other-service-wrapper');
                 const editOtherServiceName = document.getElementById('edit-other-service-name');
                 const logoutButton = document.getElementById('logout-button');
-                let clients = JSON.parse(localStorage.getItem('clients')) || [];
-                let editingClientIndex = null;
+                let clients = [];
                 let inactivityTimer;
 
                 // --- FUNCTIONS ---
@@ -385,10 +389,16 @@
                     clearTimeout(inactivityTimer);
                     inactivityTimer = setTimeout(logout, 5 * 60 * 1000); // 5 minutes in milliseconds
                 };
-                
-                const saveAndRerender = () => {
-                    localStorage.setItem('clients', JSON.stringify(clients));
-                    renderClients();
+
+                const fetchClients = async () => {
+                    const { data, error } = await supabaseClient.from('clientes').select('*').order('created_at', { ascending: false });
+                    if (error) {
+                        console.error('Error fetching clients:', error);
+                        alert(`Error al cargar clientes: ${error.message}`);
+                    } else {
+                        clients = data;
+                        renderClients();
+                    }
                 };
 
                 const renderServices = () => {
@@ -411,20 +421,20 @@
                     clientsTableBody.innerHTML = '';
                     noClientsMessage.style.display = clients.length === 0 ? 'block' : 'none';
 
-                    clients.forEach((client, index) => {
-                        const purchaseDate = new Date(client.purchaseDate + 'T00:00:00');
+                    clients.forEach((client) => {
+                        const purchaseDate = new Date(client.purchasedate + 'T00:00:00');
                         let warrantyCellHTML = '<p class="text-gray-500">Sin Garantía</p>';
-                        if (client.warrantyDays && client.warrantyDays > 0) {
+                        if (client.warrantydays && client.warrantydays > 0) {
                             const warrantyEndDate = new Date(purchaseDate);
-                            warrantyEndDate.setDate(warrantyEndDate.getDate() + client.warrantyDays);
+                            warrantyEndDate.setDate(warrantyEndDate.getDate() + client.warrantydays);
                             const today = new Date();
                             today.setHours(0,0,0,0);
                             const isWarrantyExpired = warrantyEndDate < today;
                             warrantyCellHTML = `<p class="${isWarrantyExpired ? 'status-expired' : 'status-active'}">Vence: ${warrantyEndDate.toLocaleDateString('es-ES')}</p>`;
                         }
 
-                        let paymentStatusClass = client.paidAmount >= client.total ? 'status-paid' : (client.paidAmount > 0 ? 'status-partial' : 'status-pending');
-                        let paymentStatusText = client.paidAmount >= client.total ? 'Pagado' : (client.paidAmount > 0 ? 'Abonado' : 'Pendiente');
+                        let paymentStatusClass = client.paidamount >= client.total ? 'status-paid' : (client.paidamount > 0 ? 'status-partial' : 'status-pending');
+                        let paymentStatusText = client.paidamount >= client.total ? 'Pagado' : (client.paidamount > 0 ? 'Abonado' : 'Pendiente');
                         let receiptLink = client.receipt ? `<a href="${client.receipt}" target="_blank" class="text-blue-400 hover:underline">Ver Foto</a>` : `<span class="text-gray-500">N/A</span>`;
 
                         const row = document.createElement('tr');
@@ -441,8 +451,8 @@
                             </td>
                             <td class="px-4 py-3 text-xs">
                                 <p>Total: ${client.total.toFixed(2)}</p>
-                                <p>Pagado: ${client.paidAmount.toFixed(2)}</p>
-                                <p>Resta: ${(client.total - client.paidAmount).toFixed(2)}</p>
+                                <p>Pagado: ${client.paidamount.toFixed(2)}</p>
+                                <p>Resta: ${(client.total - client.paidamount).toFixed(2)}</p>
                             </td>
                             <td class="px-4 py-3">
                                 <p class="font-bold ${paymentStatusClass}">${paymentStatusText}</p>
@@ -450,9 +460,9 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center space-x-2">
-                                    <button class="btn btn-primary text-white text-xs font-bold py-1 px-2 rounded" onclick="openEditModal(${index})">Editar</button>
-                                    <button class="btn btn-danger text-white text-xs font-bold py-1 px-2 rounded" onclick="deleteClient(${index})">Eliminar</button>
-                                    ${client.phone ? `<button class="btn btn-success text-white text-xs font-bold py-1 px-2 rounded" onclick="sendWhatsApp(${index})">WhatsApp</button>` : ''}
+                                    <button class="btn btn-primary text-white text-xs font-bold py-1 px-2 rounded" onclick="openEditModal(${client.id})">Editar</button>
+                                    <button class="btn btn-danger text-white text-xs font-bold py-1 px-2 rounded" onclick="deleteClient(${client.id})">Eliminar</button>
+                                    ${client.phone ? `<button class="btn btn-success text-white text-xs font-bold py-1 px-2 rounded" onclick="sendWhatsApp(${client.id})">WhatsApp</button>` : ''}
                                 </div>
                                 <div class="mt-2">${receiptLink}</div>
                             </td>
@@ -461,7 +471,7 @@
                     });
                 };
 
-                const addClient = (e) => {
+                const addClient = async (e) => {
                     e.preventDefault();
                     const price = parseFloat(addForm['price'].value) || 0;
                     const discount = parseFloat(addForm['discount'].value) || 0;
@@ -474,26 +484,33 @@
                         name: addForm['client-name'].value,
                         phone: addForm['client-phone'].value,
                         service: serviceName,
-                        purchaseDate: addForm['purchase-date'].value,
-                        warrantyDays: parseInt(addForm['warranty-days'].value, 10) || 0,
+                        purchasedate: addForm['purchase-date'].value,
+                        warrantydays: parseInt(addForm['warranty-days'].value, 10) || 0,
                         receipt: addForm['receipt-photo-url'].value || null,
                         price: price,
                         discount: discount,
                         total: price - discount,
-                        paidAmount: parseFloat(addForm['paid-amount'].value) || 0,
+                        paidamount: parseFloat(addForm['paid-amount'].value) || 0,
                         delivered: addForm['delivered'].checked
                     };
-                    clients.push(newClient);
-                    saveAndRerender();
-                    addForm.reset();
-                    addForm['warranty-days'].value = 30; 
-                    otherServiceWrapper.classList.add('hidden');
-                    otherServiceName.required = false;
+                    
+                    const { error } = await supabaseClient.from('clientes').insert([newClient]);
+                    if (error) {
+                        console.error('Error adding client:', error);
+                        alert('No se pudo agregar el cliente.');
+                    } else {
+                        await fetchClients();
+                        addForm.reset();
+                        addForm['warranty-days'].value = 30; 
+                        otherServiceWrapper.classList.add('hidden');
+                        otherServiceName.required = false;
+                    }
                 };
                 
-                const saveClientChanges = (e) => {
+                const saveClientChanges = async (e) => {
                     e.preventDefault();
-                    if (editingClientIndex === null) return;
+                    const clientId = document.getElementById('edit-client-id').value;
+                    if (!clientId) return;
 
                     const price = parseFloat(editForm['edit-price'].value) || 0;
                     const discount = parseFloat(editForm['edit-discount'].value) || 0;
@@ -502,34 +519,48 @@
                         serviceName = editForm['edit-other-service-name'].value;
                     }
 
-                    clients[editingClientIndex] = {
+                    const updatedClient = {
                         name: editForm['edit-client-name'].value,
                         phone: editForm['edit-client-phone'].value,
                         service: serviceName,
                         price: price,
                         discount: discount,
                         total: price - discount,
-                        paidAmount: parseFloat(editForm['edit-paid-amount'].value) || 0,
-                        purchaseDate: editForm['edit-purchase-date'].value,
-                        warrantyDays: parseInt(editForm['edit-warranty-days'].value, 10) || 0,
+                        paidamount: parseFloat(editForm['edit-paid-amount'].value) || 0,
+                        purchasedate: editForm['edit-purchase-date'].value,
+                        warrantydays: parseInt(editForm['edit-warranty-days'].value, 10) || 0,
                         receipt: editForm['edit-receipt-photo-url'].value,
                         delivered: editForm['edit-delivered'].checked,
                     };
 
-                    saveAndRerender();
-                    closeEditModal();
-                };
+                    const { error } = await supabaseClient.from('clientes').update(updatedClient).eq('id', clientId);
 
-                window.deleteClient = (index) => {
-                    if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
-                        clients.splice(index, 1);
-                        saveAndRerender();
+                    if (error) {
+                        console.error('Error updating client:', error);
+                        alert('No se pudo actualizar el cliente.');
+                    } else {
+                        await fetchClients();
+                        closeEditModal();
                     }
                 };
 
-                window.openEditModal = (index) => {
-                    editingClientIndex = index;
-                    const client = clients[index];
+                window.deleteClient = async (id) => {
+                    if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+                        const { error } = await supabaseClient.from('clientes').delete().eq('id', id);
+                        if (error) {
+                            console.error('Error deleting client:', error);
+                            alert('No se pudo eliminar el cliente.');
+                        } else {
+                            await fetchClients();
+                        }
+                    }
+                };
+
+                window.openEditModal = (id) => {
+                    const client = clients.find(c => c.id === id);
+                    if (!client) return;
+
+                    document.getElementById('edit-client-id').value = client.id;
                     editForm['edit-client-name'].value = client.name;
                     editForm['edit-client-phone'].value = client.phone;
                     
@@ -548,9 +579,9 @@
 
                     editForm['edit-price'].value = client.price;
                     editForm['edit-discount'].value = client.discount;
-                    editForm['edit-paid-amount'].value = client.paidAmount;
-                    editForm['edit-purchase-date'].value = client.purchaseDate;
-                    editForm['edit-warranty-days'].value = client.warrantyDays;
+                    editForm['edit-paid-amount'].value = client.paidamount;
+                    editForm['edit-purchase-date'].value = client.purchasedate;
+                    editForm['edit-warranty-days'].value = client.warrantydays;
                     editForm['edit-receipt-photo-url'].value = client.receipt;
                     editForm['edit-delivered'].checked = client.delivered;
                     editModal.classList.remove('hidden');
@@ -558,11 +589,10 @@
 
                 window.closeEditModal = () => {
                     editModal.classList.add('hidden');
-                    editingClientIndex = null;
                 };
 
-                window.sendWhatsApp = (index) => {
-                    const client = clients[index];
+                window.sendWhatsApp = (id) => {
+                    const client = clients.find(c => c.id === id);
                     if (!client || !client.phone) {
                         alert('Este cliente no tiene un número de teléfono registrado.');
                         return;
@@ -613,7 +643,7 @@
                 );
 
                 renderServices();
-                renderClients();
+                await fetchClients();
             }
 
             // --- LOGIN LOGIC & INITIAL PAGE LOAD ---
